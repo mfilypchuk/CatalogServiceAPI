@@ -17,30 +17,30 @@ namespace CatalogServiceAPI.Services
             return category.Items.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         }
 
-        public Item? GetItem(int id)
+        public Item? GetItem(int categoryId, int itemId)
         {
             var category = context.Categories
-                .FirstOrDefault(c => c.Items.Any(i => i.Id == id));
+                .FirstOrDefault(c => c.Id == categoryId);
 
-            return category?.Items.FirstOrDefault(i => i.Id == id);
+            return category?.Items.FirstOrDefault(i => i.Id == itemId);
         }
 
-        public Item? CreateItem(ItemRequest item) 
+        public Item? CreateItem(int categoryId, ItemRequest item)
         {
-            var category = context.Categories.FirstOrDefault(x => x.Id == item.CategoryId);
+            var category = context.Categories.FirstOrDefault(x => x.Id == categoryId);
             if (category == null)
             {
                 return null;
             }
             var nextId = category.Items.Max(x => x.Id);
-            var newItem = new Item { CategoryId = item.CategoryId, Name = item.Name, Id = nextId };
+            var newItem = new Item { CategoryId = categoryId, Name = item.Name, Id = nextId };
             category.Items.Add(newItem);
             return newItem;
         }
 
-        public Item? UpdateItem(int id, ItemRequest updateItem)
+        public Item? UpdateItem(int categoryId, int id, ItemRequest updateItem)
         {
-            var item = context.Categories.SelectMany(c => c.Items).FirstOrDefault(i => i.Id == id);
+            var item = GetItem(categoryId, id);
             if (item == null) 
             { 
                 return null;
@@ -49,16 +49,15 @@ namespace CatalogServiceAPI.Services
             return item;
         }
 
-        public bool DeleteItem(int id)
+        public bool DeleteItem(int categoryId, int id)
         {
-            var item = context.Categories.SelectMany(c => c.Items).FirstOrDefault(i => i.Id == id);
+            var item = GetItem(categoryId, id);
             if (item == null)
             {
                 return false;
             }
-            var category = context.Categories
-                .FirstOrDefault(c => c.Items.Any(i => i.Id == id));
-            category?.Items.Remove(item);
+            var category = context.Categories.First(c => c.Id == categoryId);
+            category.Items.Remove(item);
             return true;
         }
     }

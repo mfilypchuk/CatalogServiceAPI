@@ -5,44 +5,45 @@ using Microsoft.AspNetCore.Mvc;
 namespace CatalogServiceAPI.Controllers
 {
     [ApiController]
-    [Route("api/items")]
+    [Route("api/categories/{categoryId}items")]
     public class ItemController(IItemService itemService) : ControllerBase
     {
 
         [HttpGet]
-        public IActionResult GetItems([FromQuery] int categoryId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public IActionResult GetItems(int categoryId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             return Ok(itemService.GetItems(categoryId, page, pageSize));
         }
 
-        [HttpPost]
-        public IActionResult AddItem([FromBody] ItemRequest createItem)
+        [HttpGet("{itemId}")]
+        public IActionResult GetItem(int categoryId, int itemId)
         {
-            var item = itemService.CreateItem(createItem);
-            if (item == null) return NotFound();
-            return CreatedAtAction(nameof(GetItem), new { id = item.Id }, item);
-        }
-
-        [HttpGet("{id}")]
-        public IActionResult GetItem(int id)
-        {
-            var item = itemService.GetItem(id);
+            var item = itemService.GetItem(categoryId, itemId);
             if (item == null) return NotFound();
             return Ok(item);
         }
 
-        [HttpPut("{id}")]
-        public IActionResult UpdateItem(int id, [FromBody] ItemRequest updateItem)
+        [HttpPost]
+        public IActionResult AddItem(int categoryId, [FromBody] ItemRequest createItem)
         {
-            var item = itemService.UpdateItem(id, updateItem);
+            var item = itemService.CreateItem(categoryId, createItem);
+            if (item == null) return NotFound();
+            return CreatedAtAction(nameof(GetItem), new { categoryId, itemId = item.Id }, item);
+        }
+
+        [HttpPut("{itemId}")]
+        public IActionResult UpdateItem(int categoryId, int itemId, [FromBody] ItemRequest updateItem)
+        {
+            var item = itemService.UpdateItem(categoryId, itemId, updateItem);
+            if (item == null || item.CategoryId != categoryId) return NotFound();
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult DeleteItem(int id)
+        [HttpDelete("{itemId}")]
+        public IActionResult DeleteItem(int categoryId, int itemId)
         {
-            var IsDeleted = itemService.DeleteItem(id);
-            if (!IsDeleted) return NotFound();
+            var isDeleted = itemService.DeleteItem(categoryId, itemId);
+            if (!isDeleted) return NotFound();
             return NoContent();
         }
     }
